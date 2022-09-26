@@ -1,26 +1,35 @@
 import { useState, useContext } from "react";
 import githubContext from "../context/github/githubContext";
+import AlertContext from "../context/alert/AlertContext";
+import { searchUsers } from "../../components/context/github/GithubActions";
 
 function UserSearch() {
   const [text, setText] = useState("");
 
-  const { users, searchUsers, clearUsers } = useContext(githubContext);
+  const { users, dispatch } = useContext(githubContext);
+  const { setAlert } = useContext(AlertContext);
 
   const handleChange = (e) => setText(e.target.value);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (text === "") {
-      alert("Please enter something");
+      setAlert("Please enter something", "error");
     } else {
-      searchUsers(text);
-
+      dispatch({
+        type: "SET_LOADING",
+      });
+      const users = await searchUsers(text);
+      dispatch({
+        type: "GET_USERS",
+        payload: users,
+      });
       setText("");
     }
   };
 
   return (
-    <div className='grid grid-cols-1  xl:grid-cols-2  lg:grid-cols-2 md:grid-cols-2 mb-8 gap-8'>
+    <div className='grid grid-cols-1 xl:grid-cols-2 lg:grid-cols-2 md:grid-cols-2 mb-8 gap-8'>
       <div>
         <form onSubmit={handleSubmit}>
           <div className='form-control'>
@@ -34,7 +43,7 @@ function UserSearch() {
               />
               <button
                 type='submit'
-                className='absolute top-0 right-0rounded-l-none w-36 btn btn-lg'
+                className='absolute top-0 right-0 rounded-l-none w-36 btn btn-lg'
               >
                 Go
               </button>
@@ -44,10 +53,9 @@ function UserSearch() {
       </div>
       {users.length > 0 && (
         <div>
-          <button className='btn btn-ghost btn-lg text-white'>Clear</button>
           <button
-            onClick={clearUsers}
-            className='btm btn-ghost btn-last text-white'
+            onClick={() => dispatch({ type: "CLEAR_USERS" })}
+            className='btn btn-ghost btn-lg text-white'
           >
             CLEAR
           </button>
